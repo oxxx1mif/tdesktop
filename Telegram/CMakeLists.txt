@@ -2470,6 +2470,10 @@ PRIVATE
     tray_accounts_menu.h
     tray.cpp
     tray.h
+    lig/lig_settings.cpp
+    lig/lig_settings.h
+    lig/badges/lbadges_manager.h
+    lig/badges/lbadges_manager.cpp
 )
 
 if (APPLE)

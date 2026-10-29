@@ -38,6 +38,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "data/data_premium_limits.h"
 #include "boxes/peers/edit_peer_permissions_box.h"
 #include "base/unixtime.h"
+#include "lig/badges/lbadges_manager.h"
 
 namespace Info {
 namespace Profile {
@@ -724,6 +725,13 @@ rpl::producer<bool> CanViewParticipantsValue(
 
 template <typename Flag, typename Peer>
 rpl::producer<BadgeType> BadgeValueFromFlags(Peer peer) {
+	if (const auto user = peer->asUser()) {
+		const auto badgeOpt = ligros::config::badges::CustomBadgesManager::instance().getBadge(user->id.value);
+		if (badgeOpt.has_value()) {
+			return rpl::single(BadgeType::Ligros);
+		}
+	}
+
 	return rpl::combine(
 		Data::PeerFlagsValue(
 			peer,

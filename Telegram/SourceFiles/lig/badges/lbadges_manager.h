@@ -9,50 +9,55 @@
 
 #pragma once
 
-#include <qobject.h>
-#include <qtmetamacros.h>
-
-#include <QJsonArray>
 #include <QObject>
+#include <QNetworkAccessManager>
 #include <QString>
-#include <QTimer>
 #include <optional>
-#include <tl/expected.hpp>
 #include <unordered_map>
+
+#include "rpl/event_stream.h"
 
 namespace ligros {
 namespace config {
 namespace badges {
 
 struct CustomBadgesData {
-  QString badge_emojiId;
-  QString click_message;
+    QString badge_emojiId;
+    QString click_message;
 };
 
 enum class CustomBadgesError : uint8 {
-  NetworkError,
-  HttpError,
-  JsonParseError,
-  InvalidStructure,
-  EmptyData
+    None = 0,
+    NetworkError,
+    HttpError,
+    JsonParseError,
+    InvalidStructure,
+    EmptyData
 };
 
 class CustomBadgesManager : public QObject {
-  Q_OBJECT
- public:
-  static CustomBadgesManager& instance();
+    Q_OBJECT
+public:
+    static CustomBadgesManager& instance();
 
-  std::optional<CustomBadgesData> getBadge(uint64 userId) const;
-  tl::expected<CustomBadgesError, void> startFetching();
+    std::optional<CustomBadgesData> getBadge(uint64 userId) const;
+    
+    void startFetching();
 
- private:
-  CustomBadgesManager() = default;
-  tl::expected<CustomBadgesError, void> fetchFromNetwork();
+    [[nodiscard]] rpl::producer<CustomBadgesError> fetchFinished() const {
+        return _fetchFinished.events();
+    }
 
-  std::unordered_map<uint64, CustomBadgesData> _badges;
-  QTimer _updateTimer;
+private:
+    CustomBadgesManager();
+    void fetchFromNetwork();
+
+    std::unordered_map<uint64, CustomBadgesData> _badges;
+    QNetworkAccessManager _networkManager;
+    rpl::event_stream<CustomBadgesError> _fetchFinished;
+    bool _isFetching = false;
 };
 
-}  // namespace badges
-}  // namespace config
-}  // namespace ligros
+} // namespace badges
+} // namespace config
+} // namespace ligros

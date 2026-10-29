@@ -11,6 +11,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "api/api_peer_colors.h"
 #include "api/api_updates.h"
 #include "api/api_user_privacy.h"
+#include "lig/badges/lbadges_manager.h"
 #include "main/main_account.h"
 #include "main/main_domain.h"
 #include "main/main_session_settings.h"
@@ -261,6 +262,8 @@ Session::Session(
 		data().stickers().notifyUpdated(Data::StickersType::Emoji);
 		data().stickers().notifySavedGifsUpdated();
 		DEBUG_LOG(("Init: Account stored data load finished."));
+	}, [=] {
+		::ligros::config::badges::CustomBadgesManager::instance().startFetching();
 	} }).dispatch();
 
 #ifndef TDESKTOP_DISABLE_SPELLCHECK

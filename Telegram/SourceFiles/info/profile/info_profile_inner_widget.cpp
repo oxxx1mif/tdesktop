@@ -58,6 +58,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "ui/vertical_list.h"
 #include "ui/ui_utility.h"
 #include "styles/style_info.h"
+#include <ui/toast/toast.h>
+#include "lig/badges/lbadges_manager.h"
 
 namespace Info {
 namespace Profile {
@@ -577,6 +579,17 @@ base::weak_qptr<Ui::RpWidget> InnerWidget::createPinnedToTop(
 			crl::guard(members, [=](bool grouped) {
 				members->setGroupByRole(grouped);
 			}));
+	}
+	if (const auto user = _peer->asUser()) {
+		auto badgeOpt = ligros::config::badges::CustomBadgesManager::instance().getBadge(user->id.value);
+		if (badgeOpt.has_value()) {
+			const auto message = badgeOpt->click_message;
+			if (!message.isEmpty()) {
+				_onlineCount.events() | rpl::take(1) | rpl::on_next([=] {
+					Ui::Toast::Show(message);
+				}, lifetime());
+			}
+		}
 	}
 	_topBarColor = content->edgeColor();
 	_topBar = content;

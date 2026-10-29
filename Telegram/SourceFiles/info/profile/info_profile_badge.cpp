@@ -22,12 +22,14 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
 #include "ui/text/text_custom_emoji.h"
 #include "main/main_session.h"
 #include "styles/style_info.h"
+#include "lig/badges/lbadges_manager.h"
 
 namespace Info::Profile {
 namespace {
 
 [[nodiscard]] bool HasPremiumClick(const Badge::Content &content) {
 	return content.badge == BadgeType::Premium
+	    || content.badge == BadgeType::Ligros
 		|| (content.badge == BadgeType::Verified && content.emojiStatusId);
 }
 
@@ -99,6 +101,8 @@ void Badge::setContent(Content content) {
 			return tr::lng_fake_badge(tr::now);
 		case BadgeType::Direct:
 			return tr::lng_direct_badge(tr::now);
+		case BadgeType::Ligros:
+			return QString("Ligros");
 		}
 		Unexpected("badge type");
 	}());
@@ -276,6 +280,19 @@ Data::CustomEmojiSizeTag Badge::sizeTag() const {
 
 rpl::producer<Badge::Content> BadgeContentForPeer(not_null<PeerData*> peer) {
 	const auto statusOnlyForPremium = peer->isUser();
+	
+	if (const auto user = peer->asUser()) {
+		auto badgeOpt = ligros::config::badges::CustomBadgesManager::instance().getBadge(user->id.value);
+		if (badgeOpt.has_value()) {
+			const auto emojiIdStr = badgeOpt->badge_emojiId;
+			
+			return rpl::single(Badge::Content{
+				.badge = BadgeType::Ligros,
+				.emojiStatusId = { emojiIdStr.toULongLong() }
+			});
+		}
+	}
+
 	return rpl::combine(
 		BadgeValue(peer),
 		EmojiStatusIdValue(peer)
@@ -294,6 +311,7 @@ rpl::producer<Badge::Content> BadgeContentForPeer(not_null<PeerData*> peer) {
 		return Badge::Content{ badge, emojiStatusId };
 	});
 }
+
 
 rpl::producer<Badge::Content> VerifiedContentForPeer(
 		not_null<PeerData*> peer) {

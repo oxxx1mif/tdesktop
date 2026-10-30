@@ -107,10 +107,12 @@ void Badge::setContent(Content content) {
 		Unexpected("badge type");
 	}());
 	_view->show();
+	
 	switch (_content.badge) {
 	case BadgeType::Verified:
 	case BadgeType::BotVerified:
-	case BadgeType::Premium: {
+	case BadgeType::Premium:
+	case BadgeType::Ligros: {
 		const auto id = _content.emojiStatusId;
 		const auto emoji = id
 			? (Data::FrameSizeFromTag(sizeTag())
